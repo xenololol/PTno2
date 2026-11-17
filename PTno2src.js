@@ -1,8 +1,9 @@
 /* note: intended to be ran in nodejs */
 /* doesnt have any input support yet unfortunately */
 /* below for debuggin purposes */
+const OE = (o1, o2) => Object.entries(o1).filter(([k, v]) => k !== `toString`).every(([key, val]) => typeof val === `object` ? OE(val, o2?.[key]) : val === o2?.[key]);
 Array.prototype.toString = function() {return `[${this.join(`, `)}]`; }
-const recurArrReplace = (arr, from, to) => arr.map(i => Array.isArray(i) ? i.map(i => recurArrReplace(i, from, to)) : (i === from ? to : i));
+const recurArrReplace = (arr, from, to) => arr.map?.(i => Array.isArray(i) ? recurArrReplace(i, from, to) : (OE(i, from) ? to : i)) ?? arr;
 function PTno2Struct(type, arr) {
     this.PTtype = type; this.data = arr; this.toString = () => `[PT ${type} ${arr}]`}
 const vars = {};
@@ -43,12 +44,12 @@ const evl = (codeArr, ovarsScope = vars) => {
     const retrn = t => {toRtn = t;};
     codeArr.forEach(oosubcode => {
         const osubcode = oosubcode?.PTtype ? oosubcode.data : oosubcode;
-        const subcode = osubcode.map(i => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i)) : i).map(i => i?.PTtype === `blockium` ? (i[0].data === `qte` ? i[1] : evl(i)) : i);
+        const subcode = osubcode.map(i => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i)) : i);
         const [cmd, ...args] = subcode;
         const cmdStr = cmd.data;
         if(cmdStr.prms !== undefined && cmdStr.body) {
             let theBody = [...cmdStr.body.data];
-            cmdStr.prms.forEach((it, ind) => { theBody = recurArrReplace(theBody, it, args[ind]);});
+            cmdStr.prms.data.forEach((it, ind) => { theBody = recurArrReplace(theBody, it, args[ind]);});
             evl(theBody);}
         if(cmdStr === `;`) retrn(evl(args));
         if(cmdStr === `var`) {
