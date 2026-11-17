@@ -60,7 +60,11 @@ const evl = (codeArr, ovarsScope = vars) => {
             return (varsScope[`!${args[0].data}`] = args[1]);}
         if(cmdStr === `set` && Object.keys(varsScope).filter(v => !(v.startsWith(`!`))).map(v => v.substring(1, v.length)).includes(args[0].data)) retrn(varsScope[args[0].data] = args[1]);
         if(cmdStr === `out`) console.log(args[0]);
-        if(cmdStr === `.`) retrn(new PTno2Struct(`lambda`, { prms: args[0], body: args[1]}));}); return toRtn;};
+        if(cmdStr === `.`) retrn(new PTno2Struct(`lambda`, { prms: args[0], body: args[1]}));
+        if(cmd === `+`) retrn(args.reduce((a, b) => a + b));
+        if(cmd === `-`) retrn(args.reduce((a, b) => a - b));
+        if(cmd === `*`) retrn(args.reduce((a, b) => a * b));
+        if(cmd === `/`) retrn(args.reduce((a, b) => a / b));}); return toRtn;};
 
 
 const evlStr = s => evl(toCA(s));
