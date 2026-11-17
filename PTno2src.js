@@ -2,6 +2,7 @@
 /* doesnt have any input support yet unfortunately */
 /* below for debuggin purposes */
 Array.prototype.toString = function() {return `[${this.join(`, `)}]`; }
+const recurArrReplace = (arr, from, to) => arr.map(i => Array.isArray(i) ? i.map(i => recurArrReplace(i, from, to)) : (i === from ? to : i));
 function PTno2Struct(type, arr) {
     this.PTtype = type; this.data = arr; this.toString = () => `[PT ${type} ${arr}]`}
 const vars = {};
@@ -31,19 +32,34 @@ const convStr = ostr => {
     if(str.startsWith(`b`) && str !== `b` && !(Number.isNaN(+(str.substring(1, str.length))))) return BigInt(str.substring(1, str.length));
     if(str === `nl`) return null;
     if(str.startsWith(`'(`)) return [new PTno2Struct(`id`, `qte`), convStr(str.substring(1, str.length))];
-    if(str.startsWith(`(`) && str.endsWith(`)`)) return PTno2__arr(sub)[0].map(convStr);
+    if(str.startsWith(`(`) && str.endsWith(`)`)) return PTno2__arr(sub).map(convStr);
     if(str.startsWith(`[`) && str.endsWith(`]`)) return new PTno2Struct(`li`, PTno2__arr(sub)[0].map(convStr));
     if(str.startsWith(`{`) && str.endsWith(`}`)) return new PTno2Struct(`blockium`, PTno2__arr(sub).map(convStr));
     return new PTno2Struct(`id`, str);};
 const toCA = str => convStr(PTno2__arr(str));
-const evl = (codeArr, varsScope = vars) => {
-    codeArr.forEach(osubcode => {
-        const subcode = osubcode.map(i => Array.isArray(i) ? evl(i) : i);
+const evl = (codeArr, ovarsScope = vars) => {
+    const varsScope = {...ovarsScope};
+    let toRtn;
+    const retrn = t => {toRtn = t;};
+    codeArr.forEach(oosubcode => {
+        const osubcode = oosubcode?.PTtype ? oosubcode.data : oosubcode;
+        const subcode = osubcode.map(i => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i)) : i).map(i => i?.PTtype === `blockium` ? (i[0].data === `qte` ? i[1] : evl(i)) : i);
         const [cmd, ...args] = subcode;
         const cmdStr = cmd.data;
-        if(cmdStr === `var`) varsScope[args[0].data] = args[1];
-        if(cmdStr === `cnt`) varsScope[`!${args[0].data}`] = args[1];
-        if(cmdStr === `out`) console.log(args[0]); });};
+        if(cmdStr.prms !== undefined && cmdStr.body) {
+            let theBody = [...cmdStr.body.data];
+            cmdStr.prms.forEach((it, ind) => { theBody = recurArrReplace(theBody, it, args[ind]);});
+            evl(theBody);}
+        if(cmdStr === `;`) retrn(evl(args));
+        if(cmdStr === `var`) {
+            if(varsScope[args[0].data]) retrn();
+            retrn(varsScope[args[0].data] = args[1]);}
+        if(cmdStr === `cnt`) {
+            if(varsScope[args[0].data]) retrn();
+            return (varsScope[`!${args[0].data}`] = args[1]);}
+        if(cmdStr === `set` && Object.keys(varsScope).filter(v => !(v.startsWith(`!`))).map(v => v.substring(1, v.length)).includes(args[0].data)) retrn(varsScope[args[0].data] = args[1]);
+        if(cmdStr === `out`) console.log(args[0]);
+        if(cmdStr === `.`) retrn(new PTno2Struct(`lambda`, { prms: args[0], body: args[1]}));}); return toRtn;};
 
 
 const evlStr = s => evl(toCA(s));
