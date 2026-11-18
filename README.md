@@ -15,4 +15,4 @@ var to define a variable, cnt to define a constant, set to set a variable, out t
 
 ## notes
 
-this is a really REALLY new language. and a lot of things r prob really buggy so i apologize if os
+this is a really REALLY new language. and a lot of things r prob really buggy so i apologize if so
