@@ -13,6 +13,6 @@ why did i call it the new homoiconicity? well because this isn't just a lisp wit
 
 var to define a variable, cnt to define a constant, set to set a variable, out to output, . for a lambda, im too lazy to put more also \#t for true and \#f for false
 
-##notes
+## notes
 
 this is a really REALLY new language. and a lot of things r prob really buggy so i apologize if os
