@@ -8,3 +8,7 @@ A simple hello world would be out "Hello World"
 ## the homoiconicity
 
 why did i call it the new homoiconicity? well because this isn't just a lisp with different syntax. It has 2 types of code-data structures: callium and blockium. so it looks kinda c style yeah really cool
+
+## docs
+
+var to define a variable, cnt to define a constant, set to set a variable, out to output, . for a lambda, im too lazy to put more also #t for true and #f for false
