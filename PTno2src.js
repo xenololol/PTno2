@@ -32,22 +32,29 @@ const convStr = ostr => {
     if(!(Number.isNaN(+str))) return +str;
     if(str.startsWith(`b`) && str !== `b` && !(Number.isNaN(+(str.substring(1, str.length))))) return BigInt(str.substring(1, str.length));
     if(str === `nl`) return null;
-    if(str.startsWith(`'(`)) return [new PTno2Struct(`id`, `qte`), convStr(str.substring(1, str.length))];
+    if(str === `#t`) return true;
+    if(str === `#f`) return false;
+    if(str.startsWith(`'`)) return [new PTno2Struct(`id`, `qte`), convStr(str.substring(1, str.length))];
     if(str.startsWith(`(`) && str.endsWith(`)`)) return PTno2__arr(sub).map(convStr);
     if(str.startsWith(`[`) && str.endsWith(`]`)) return new PTno2Struct(`li`, PTno2__arr(sub)[0].map(convStr));
     if(str.startsWith(`{`) && str.endsWith(`}`)) return new PTno2Struct(`blockium`, PTno2__arr(sub).map(convStr));
     return new PTno2Struct(`id`, str);};
 const toCA = str => convStr(PTno2__arr(str));
-const evl = (codeArr, ovarsScope = vars) => {
+const evl = (ocodeArr, ovarsScope = vars) => {
+    const codeArr = ocodeArr?.PTtype ? ocodeArr.data : ocodeArr;
     const varsScope = {...ovarsScope};
     let toRtn;
+    const autoqs = {var: [0], set: [0]};
+    const aqfns = Object.keys(autoqs), aqais = Object.values(autoqs);
     const retrn = t => {toRtn = t;};
+    const varFromKey = k => varsScope?.[k];
     codeArr.forEach(oosubcode => {
-        const osubcode = oosubcode?.PTtype ? oosubcode.data : oosubcode;
-        const subcode = osubcode.map(i => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i)) : i);
+        let osubcode = oosubcode?.PTtype ? oosubcode.data : oosubcode;
+        Object.entries(autoqs).forEach(([fname, arg]) => osubcode[0].data === fname && arg.forEach(a => {osubcode[a+1] = [new PTno2Struct(`id`, `qte`), osubcode[a+1]]; }));
+        const subcode = osubcode.map((i, ind) => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i, varsScope)) : varFromKey(i.data) ?? i);
         const [cmd, ...args] = subcode;
-        const cmdStr = cmd.data;
-        if(cmdStr.prms !== undefined && cmdStr.body) {
+        const cmdStr = cmd?.data;
+        if(cmdStr?.prms !== undefined && cmdStr?.body) {
             let theBody = [...cmdStr.body.data];
             cmdStr.prms.data.forEach((it, ind) => { theBody = recurArrReplace(theBody, it, args[ind]);});
             evl(theBody);}
@@ -58,13 +65,15 @@ const evl = (codeArr, ovarsScope = vars) => {
         if(cmdStr === `cnt`) {
             if(varsScope[args[0].data]) retrn();
             return (varsScope[`!${args[0].data}`] = args[1]);}
-        if(cmdStr === `set` && Object.keys(varsScope).filter(v => !(v.startsWith(`!`))).map(v => v.substring(1, v.length)).includes(args[0].data)) retrn(varsScope[args[0].data] = args[1]);
+        if(cmdStr === `set` && Object.keys(varsScope).filter(v => !(v.startsWith(`!`))).includes(args[0].data)) retrn(varsScope[args[0].data] = args[1]);
         if(cmdStr === `out`) console.log(args[0]);
         if(cmdStr === `.`) retrn(new PTno2Struct(`lambda`, { prms: args[0], body: args[1]}));
-        if(cmd === `+`) retrn(args.reduce((a, b) => a + b));
-        if(cmd === `-`) retrn(args.reduce((a, b) => a - b));
-        if(cmd === `*`) retrn(args.reduce((a, b) => a * b));
-        if(cmd === `/`) retrn(args.reduce((a, b) => a / b));}); return toRtn;};
+        if(cmdStr === `+`) retrn(args.reduce((a, b) => a + b));
+        if(cmdStr === `-`) retrn(args.reduce((a, b) => a - b));
+        if(cmdStr === `*`) retrn(args.reduce((a, b) => a * b));
+        if(cmdStr === `/`) retrn(args.reduce((a, b) => a / b));
+        if(cmdStr === `if`) retrn(args[0] ? evl(args[1]) : evl(args[2]));
+        if(!(cmd?.PTtype)) retrn(cmd);}); return toRtn;};
 
 
 const evlStr = s => evl(toCA(s));
