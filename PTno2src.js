@@ -40,6 +40,7 @@ const convStr = ostr => {
     if(str.startsWith(`{`) && str.endsWith(`}`)) return new PTno2Struct(`blockium`, PTno2__arr(sub).map(convStr));
     return new PTno2Struct(`id`, str);};
 const toCA = str => convStr(PTno2__arr(str));
+const err = name => {throw new Error(name);};
 const evl = (ocodeArr, ovarsScope = vars) => {
     const codeArr = ocodeArr?.PTtype ? ocodeArr.data : ocodeArr;
     const varsScope = {...ovarsScope};
@@ -48,10 +49,11 @@ const evl = (ocodeArr, ovarsScope = vars) => {
     const aqfns = Object.keys(autoqs), aqais = Object.values(autoqs);
     const retrn = t => {toRtn = t;};
     const varFromKey = k => varsScope?.[k];
+    let err;
     codeArr.forEach(oosubcode => {
         let osubcode = oosubcode?.PTtype ? oosubcode.data : oosubcode;
         Object.entries(autoqs).forEach(([fname, arg]) => osubcode[0].data === fname && arg.forEach(a => {osubcode[a+1] = [new PTno2Struct(`id`, `qte`), osubcode[a+1]]; }));
-        const subcode = osubcode.map((i, ind) => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i, varsScope)) : varFromKey(i.data) ?? i);
+        const subcode = osubcode.map((i, ind) => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i, varsScope)) : i?.PTtype === `id` && ind !== 0 ? (varFromKey(i.data) ?? (err = `undefined variable`, undefined)) : i);
         const [cmd, ...args] = subcode;
         const cmdStr = cmd?.data;
         if(cmdStr?.prms !== undefined && cmdStr?.body) {
@@ -73,7 +75,7 @@ const evl = (ocodeArr, ovarsScope = vars) => {
         if(cmdStr === `*`) retrn(args.reduce((a, b) => a * b));
         if(cmdStr === `/`) retrn(args.reduce((a, b) => a / b));
         if(cmdStr === `if`) retrn(args[0] ? evl(args[1]) : evl(args[2]));
-        if(!(cmd?.PTtype)) retrn(cmd);}); return toRtn;};
+        if(!(cmd?.PTtype)) retrn(cmd);}); if(err) throw err; return toRtn;};
 
 
 const evlStr = s => evl(toCA(s));
