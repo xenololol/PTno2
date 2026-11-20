@@ -49,11 +49,11 @@ const evl = (ocodeArr, ovarsScope = vars) => {
     const aqfns = Object.keys(autoqs), aqais = Object.values(autoqs);
     const retrn = t => !toRtn && (toRtn = t);
     const varFromKey = k => varsScope?.[k];
-    let err;
+    let err = e => {throw e;};
     codeArr.forEach(oosubcode => {
         let osubcode = oosubcode?.PTtype ? oosubcode.data : oosubcode;
         Object.entries(autoqs).forEach(([fname, arg]) => osubcode[0].data === fname && arg.forEach(a => {osubcode[a+1] = [new PTno2Struct(`id`, `qte`), osubcode[a+1]]; }));
-        const subcode = osubcode.map((i, ind) => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i, varsScope)) : i?.PTtype === `id` && ind !== 0 ? (varFromKey(i.data) ?? (err = `undefined variable`, undefined)) : i);
+        const subcode = osubcode.map((i, ind) => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i, varsScope)) : i?.PTtype === `id` && ind !== 0 ? (varFromKey(i.data) ?? (err(`undefined variable`), undefined)) : i);
         const [cmd, ...args] = subcode;
         const cmdStr = cmd?.data;
         if(cmdStr?.prms !== undefined && cmdStr?.body) {
@@ -75,6 +75,6 @@ const evl = (ocodeArr, ovarsScope = vars) => {
         if(cmdStr === `*`) retrn(args.reduce((a, b) => a * b));
         if(cmdStr === `/`) retrn(args.reduce((a, b) => a / b));
         if(cmdStr === `if`) retrn(args[0] ? evl(args[1], varsScope) : evl(args[2], varsScope));
-        retrn(varFromKey(cmdStr) ?? cmd);}); if(err) throw err; return toRtn;};
+        retrn(varFromKey(cmdStr) ?? cmd);}); return toRtn;};
 
 const evlStr = s => evl(toCA(s));
