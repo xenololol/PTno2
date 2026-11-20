@@ -47,7 +47,7 @@ const evl = (ocodeArr, ovarsScope = vars) => {
     let toRtn;
     const autoqs = {var: [0], set: [0]};
     const aqfns = Object.keys(autoqs), aqais = Object.values(autoqs);
-    const retrn = t => {toRtn = t;};
+    const retrn = t => !toRtn && (toRtn = t);
     const varFromKey = k => varsScope?.[k];
     let err;
     codeArr.forEach(oosubcode => {
@@ -74,8 +74,7 @@ const evl = (ocodeArr, ovarsScope = vars) => {
         if(cmdStr === `-`) retrn(args.reduce((a, b) => a - b));
         if(cmdStr === `*`) retrn(args.reduce((a, b) => a * b));
         if(cmdStr === `/`) retrn(args.reduce((a, b) => a / b));
-        if(cmdStr === `if`) retrn(args[0] ? evl(args[1]) : evl(args[2]));
-        if(!(cmd?.PTtype)) retrn(cmd);}); if(err) throw err; return toRtn;};
-
+        if(cmdStr === `if`) retrn(args[0] ? evl(args[1], varsScope) : evl(args[2], varsScope));
+        retrn(varFromKey(cmdStr) ?? cmd);}); if(err) throw err; return toRtn;};
 
 const evlStr = s => evl(toCA(s));
