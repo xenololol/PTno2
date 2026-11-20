@@ -75,6 +75,7 @@ const evl = (ocodeArr, ovarsScope = vars) => {
         if(cmdStr === `*`) retrn(args.reduce((a, b) => a * b));
         if(cmdStr === `/`) retrn(args.reduce((a, b) => a / b));
         if(cmdStr === `if`) retrn(args[0] ? evl(args[1], varsScope) : evl(args[2], varsScope));
+        if(cmdStr === `func`) retrn(varsScope[args[0].data] = new PTno2Struct(`lambda`, { prms: args[1], body: args[2] }));
         retrn(varFromKey(cmdStr) ?? cmd);}); return toRtn;};
 
 const evlStr = s => evl(toCA(s));
