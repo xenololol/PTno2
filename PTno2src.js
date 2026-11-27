@@ -56,7 +56,7 @@ const evl = (ocodeArr, ovarsScope = vars, theQs = ({var: [0], set: [0], func: [0
     codeArr.forEach(oosubcode => {
         let osubcode = oosubcode?.PTtype ? oosubcode.data : oosubcode;
         Object.entries(autoqs).forEach(([fname, arg]) => osubcode[0].data === fname && arg.forEach(a => {osubcode[a+1] = [new PTno2Struct(`id`, `qte`), osubcode[a+1]]; }));
-        const subcode = osubcode.map?.((i, ind) => Array.isArray(i) ? (i[0].data === `qte` ? i[1] : evl(i, varsScope, autoqs)) : i?.PTtype === `id` && !i.dcfv ? (varFromKey(i.data) ?? (ind !== 0 ? err(`undefined variable`) : varFromKey(i.data) ?? i)) : i) ?? osubcode;
+        const subcode = osubcode.map?.((i, ind) => Array.isArray(i) ? (i[0].data === `qte` ? (i[1]?.PTtype ? {...i[1], dcfv: true} : i[1]) : evl(i, varsScope, autoqs)) : i?.PTtype === `id` && !i.dcfv ? (varFromKey(i.data) ?? (ind !== 0 ? err(`undefined variable`) : varFromKey(i.data) ?? i)) : i) ?? osubcode;
         let [cmd, ...args] = subcode;
         const cmdStr = cmd?.data;
         if(cmdStr?.prms !== undefined && cmdStr?.body) {
@@ -81,7 +81,7 @@ const evl = (ocodeArr, ovarsScope = vars, theQs = ({var: [0], set: [0], func: [0
         if(cmdStr === `/`) retrn(args.reduce((a, b) => a / b));
         if(cmdStr === `==`) retrn(OE(args[0], args[1]));
         if(cmdStr === `if`) retrn(args[0] ? evl(args[1], varsScope, autoqs) : evl(args[2],varsScope, autoqs));
-        if(cmdStr === `func`) {autoqs[args[0].data] = []; let thing = autoqs[args[0].data]; retrn(varsScope[args[0].data] = new PTno2Struct(`lambda`, { prms: new PTno2Struct(`li`, args[1].data.map((a, ind) => Array.isArray(a) && a[0][0]?.data === `aq` ? (thing.push(ind), a[0][1].dcfv = true, a[0][1]) : a)), body: args[2] }));}
+        if(cmdStr === `func`) {autoqs[args[0].data] = []; let thing = autoqs[args[0].data]; retrn(varsScope[args[0].data] = new PTno2Struct(`lambda`, { prms: new PTno2Struct(`li`, args[1].data.map((a, ind) => Array.isArray(a) && a[0][0]?.data === `aq` ? (thing.push(ind), a[0][1]) : a)), body: args[2] }));}
         if(toRtn === undefined) retrn(cmd?.PTtype ? (varFromKey(cmdStr) ?? (!cmd.dcfv && err(`undefined variable`), cmd)) : cmd);}); return toRtn;};
 
 const evlStr = s => evl(toCA(s));
